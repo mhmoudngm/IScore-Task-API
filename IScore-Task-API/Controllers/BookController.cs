@@ -1,4 +1,5 @@
 ﻿using Application.Components.Books.Create;
+using Application.Components.Books.List;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -17,6 +18,13 @@ namespace IScore_Task_API.Controllers
         public async Task<IActionResult> CreateNewBook([FromBody] CreateNewBookCommand command)
         {
             var result = await Mediator.Send(command);
+            return Ok(result);
+        }
+
+        [HttpGet("GetAllBooks")]
+        public async Task<IActionResult> GetAllBooks([FromQuery] GetAllBooksQuery query)
+        {
+            var result = await Mediator.Send(query);
             return Ok(result);
         }
     }

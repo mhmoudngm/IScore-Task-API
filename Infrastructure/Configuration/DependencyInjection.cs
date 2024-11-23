@@ -2,6 +2,7 @@
 using Application.Components.Books;
 using FluentValidation;
 using Infrastructure.Components;
+using Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -21,6 +22,7 @@ namespace Infrastructure.Configuration
             #region Repos
             services.AddScoped<IBook, BookRepo>();
             services.AddScoped<IAuthor, AuthorRepo>();
+            services.AddScoped<IUserContext, UserContext>();
             #endregion
             services.Setuppasswordsettings();
             #region Packages

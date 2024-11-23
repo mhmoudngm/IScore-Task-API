@@ -1,11 +1,8 @@
-﻿using Application.Components.Books.Create;
+﻿using Application.Components.Author.List;
+using Application.Components.Books.Create;
+using Application.Components.Books.List;
 using AutoMapper;
 using Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructure.Configuration.AutoMapper
 {
@@ -14,6 +11,10 @@ namespace Infrastructure.Configuration.AutoMapper
         public Profiles()
         {
             CreateMap<Book, CreateNewBookCommand>().ReverseMap();
+            CreateMap<Author, AuthorDto>().ReverseMap();
+            CreateMap<BookDto, Book>().ReverseMap()
+                .ForMember(i => i.AuthorId, s => s.MapFrom(i => i.AuthorId))
+                .ForMember(i => i.AuthorName, s => s.MapFrom(i => i.Author.Name));
         }
     }
 }

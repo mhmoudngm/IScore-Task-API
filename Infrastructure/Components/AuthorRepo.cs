@@ -1,24 +1,28 @@
 ﻿using Application.Common.Responses;
 using Application.Components.Author;
 using Application.Components.Author.Create;
-using Application.Components.Books.Create;
+using Application.Components.Author.List;
+using AutoMapper;
 using Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using Infrastructure.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace Infrastructure.Components
 {
     public class AuthorRepo : IAuthor
     {
         private readonly AppDbContext context;
+        private readonly IMapper mapper;
+        private readonly IUserContext userContext;
 
-        public AuthorRepo(AppDbContext context)
+        public AuthorRepo(AppDbContext context, IMapper mapper,IUserContext userContext)
         {
             this.context = context;
+            this.mapper = mapper;
+            this.userContext = userContext;
         }
         public async Task<OutputResponse<bool>> CreateNewAuthor(CreateNewAuthorCommand command)
         {
@@ -31,6 +35,19 @@ namespace Infrastructure.Components
                 Success = true,
                 Message = "Author Added Successfully",
                 Model = true
+            };
+        }
+
+        public async Task<OutputResponse<GetAllAuthorsQueryResult>> GetAllAuthors(GetAllAuthorsQuery query)
+        {
+            var AllAuthors = await context.Authors.AsNoTracking().ToListAsync();
+
+            var Maplist = mapper.Map<List<AuthorDto>>(AllAuthors);
+            return new OutputResponse<GetAllAuthorsQueryResult>()
+            {
+                StatusCode = HttpStatusCode.OK,
+                Success = true,
+                Model = new GetAllAuthorsQueryResult() { Collection = Maplist }
             };
         }
     }
