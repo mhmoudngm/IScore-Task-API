@@ -1,4 +1,5 @@
-﻿using Application.Components.Books;
+﻿using Application.Components.Author;
+using Application.Components.Books;
 using FluentValidation;
 using Infrastructure.Components;
 using Microsoft.AspNetCore.Identity;
@@ -19,6 +20,7 @@ namespace Infrastructure.Configuration
             #endregion
             #region Repos
             services.AddScoped<IBook, BookRepo>();
+            services.AddScoped<IAuthor, AuthorRepo>();
             #endregion
             services.Setuppasswordsettings();
             #region Packages
