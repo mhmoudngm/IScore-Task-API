@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Identity;
 using Application.Configuration;
 using Infrastructure.Configuration;
 using IScore_Task_API.Services.Setups;
+using Microsoft.Extensions.Options;
+using Application.Components.Users;
 
 var builder = WebApplication.CreateBuilder(args);
 IConfiguration config = builder.Configuration;
@@ -35,6 +37,15 @@ app.UseHttpsRedirection();
 app.MapGroup("api/identity").MapIdentityApi<User>();
 app.UseAuthorization();
 //app.UseCustomeExceptionHandler();
+app.UseCors(options =>
+{
+    options.WithOrigins("http://localhost:8080", "http://localhost:8081") 
+          .AllowAnyHeader()                    
+          .AllowAnyMethod();                   
+});
+var scope = app.Services.CreateScope();
+var seeder = scope.ServiceProvider.GetRequiredService<IUserRolesSeeds>();
+await seeder.SetUserRolesSeeds();
 app.MapControllers();
 
 app.Run();

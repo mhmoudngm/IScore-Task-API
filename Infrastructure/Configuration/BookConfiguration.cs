@@ -19,6 +19,10 @@ namespace Infrastructure.Configuration
             builder.Property(b => b.Id)
               .ValueGeneratedOnAdd();
 
+            builder.Property(b => b.IsDeleted)
+             .HasDefaultValue(false)
+             .IsRequired();
+
             builder.HasOne(b => b.Author)
             .WithMany(a => a.Books)
             .HasForeignKey(b => b.AuthorId);

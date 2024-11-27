@@ -1,5 +1,6 @@
 ﻿using Application.Components.Author;
 using Application.Components.Books;
+using Application.Components.Users;
 using FluentValidation;
 using Infrastructure.Components;
 using Infrastructure.Services;
@@ -23,6 +24,7 @@ namespace Infrastructure.Configuration
             services.AddScoped<IBook, BookRepo>();
             services.AddScoped<IAuthor, AuthorRepo>();
             services.AddScoped<IUserContext, UserContext>();
+            services.AddScoped<IUserRolesSeeds, UserRolesSeeds>();
             #endregion
             services.Setuppasswordsettings();
             #region Packages

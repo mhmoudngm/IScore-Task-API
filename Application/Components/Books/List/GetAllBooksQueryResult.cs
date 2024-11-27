@@ -23,5 +23,6 @@ namespace Application.Components.Books.List
         public string CreatedBy { get; set; }
         public string AuthorName { get; set; }
         public Guid AuthorId { get; set; }
+        public bool borrowing { get; set; }
     }
 }

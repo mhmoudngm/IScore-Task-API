@@ -1,7 +1,10 @@
 ﻿using Application.Common.Responses;
 using Application.Components.Author.List;
 using Application.Components.Books;
+using Application.Components.Books.borrowing;
 using Application.Components.Books.Create;
+using Application.Components.Books.Delete;
+using Application.Components.Books.Edit;
 using Application.Components.Books.List;
 using AutoMapper;
 using Domain.Entities;
@@ -28,6 +31,29 @@ namespace Infrastructure.Components
             this.mapper = mapper;
             this.userContext = userContext;
         }
+
+        public async Task<OutputResponse<bool>> borrowingAndUnborrowing(borrowingAndUnborrowingCommand command)
+        {
+            //get current user
+            var CurrentUser = await userContext.GetCurrentUser();
+            //check if this book already borrowed from this user or not
+            var check = context.UsersBooks.FirstOrDefault(i => i.UserId == CurrentUser.UserId && i.BookId == command.Id);
+            if (check != null)
+                context.UsersBooks.Remove(check);
+            else
+                await context.UsersBooks.AddAsync(new UsersBooks() { BookId = command.Id, UserId = CurrentUser.UserId });
+
+
+            await context.SaveChangesAsync();
+            return new OutputResponse<bool>()
+            {
+                StatusCode = HttpStatusCode.OK,
+                Success = true,
+                Message = "Book borrowed Successfully",
+                Model = true
+            };
+        }
+
         public async Task<OutputResponse<CreateNewBookCommandResult>> CreateNewBook(CreateNewBookCommand command)
         {
             //Map Command To Book Entity
@@ -44,8 +70,51 @@ namespace Infrastructure.Components
                 Message = "Book Added Successfully",
                 Model = new CreateNewBookCommandResult()
                 {
-                    Resut = true,
+                    Result = true,
                     Title = command.Title,
+                }
+            };
+        }
+
+        public async Task<OutputResponse<DeleteBookCommandResult>> DeleteBook(DeleteBookCommand command)
+        {
+            var Book = await context.Books.FirstOrDefaultAsync(i => i.Id == command.Id);
+            Book.IsDeleted = true;
+            await context.SaveChangesAsync();
+
+            return new OutputResponse<DeleteBookCommandResult>()
+            {
+                StatusCode = HttpStatusCode.OK,
+                Success = true,
+                Message = "Book Deleted Successfully",
+                Model = new DeleteBookCommandResult()
+                {
+                    Result = true,
+                }
+            };
+        }
+
+        public async Task<OutputResponse<EditBookCommandResult>> EditBookInfo(EditBookCommand command)
+        {
+            var CurrentUser = await userContext.GetCurrentUser();
+            var book = await context.Books.FirstOrDefaultAsync(i => i.Id == command.Id);
+            book.Title = command.Title;
+            book.Description = command.Description;
+            book.AuthorId = command.AuthorId;
+            book.Quantity = command.Quantity;
+            book.PublishedDate = command.PublishedDate;
+            book.ModifiedBy = CurrentUser?.UserId;
+            book.LastModifiedDate = DateTime.Now;
+            await context.SaveChangesAsync();
+
+            return new OutputResponse<EditBookCommandResult>()
+            {
+                StatusCode = HttpStatusCode.OK,
+                Success = true,
+                Message = "Book Updated Successfully",
+                Model = new EditBookCommandResult()
+                {
+                    Result = true,
                 }
             };
         }
@@ -55,12 +124,20 @@ namespace Infrastructure.Components
             if (query.PageSize <= 0) query.PageSize = 10;
             if (query.PageNumber <= 0) query.PageNumber = 1;
 
-            var AllBooks = await context.Books.Include(i => i.Author).AsNoTracking().Where(i => string.IsNullOrEmpty(query.Term) ||
-            (i.Title.Contains(query.Term) || i.Author.Name.Contains(query.Term) || i.PublishedDate.ToString().Contains(query.Term)))
-                .Skip(query.PageSize * (query.PageNumber - 1)).Take(query.PageSize).ToListAsync();
+            var AllBooks = await context.Books.Include(i => i.Author).AsNoTracking().Where(i => !i.IsDeleted && (string.IsNullOrEmpty(query.Term) ||
+            (i.Title.Contains(query.Term) || i.Author.Name.Contains(query.Term) || i.PublishedDate.ToString().Contains(query.Term))))
+                .ToListAsync();
+            var AllFilteredBooks = AllBooks.Where(i => !i.IsDeleted && (string.IsNullOrEmpty(query.Term) ||
+       (i.Title.Contains(query.Term) || i.Author.Name.Contains(query.Term) || i.PublishedDate.ToString().Contains(query.Term))))
+           .Skip(query.PageSize * (query.PageNumber - 1)).Take(query.PageSize).ToList();
 
-            var Maplist = mapper.Map<List<BookDto>>(AllBooks);
-            var TotalCount = Maplist.Count();
+            var Maplist = mapper.Map<List<BookDto>>(AllFilteredBooks);
+            var CurrentUser = await userContext.GetCurrentUser();
+            foreach (var book in Maplist)
+            {
+               book.borrowing = context.UsersBooks.Any(i => i.UserId == CurrentUser.UserId && i.BookId == book.Id);
+            }
+            var TotalCount = AllBooks.Count();
             var TotalPages = TotalCount / query.PageSize;
             if (TotalCount % query.PageSize > 0)
                 TotalPages++;
